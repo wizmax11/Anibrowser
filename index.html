@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AniList Browser</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a28;
+    --accent: #6246ea;
+    --accent2: #e45858;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --border: #2a2a3d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    padding: 2rem 2rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .search-wrap {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+    max-width: 480px;
+    margin: 0 2rem;
+  }
+
+  input {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.65rem 1.1rem;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  input:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1.4rem;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  button:hover { opacity: 0.85; }
+  button:active { transform: scale(0.97); }
+
+  /* FILTERS */
+  .filters {
+    padding: 1.2rem 2rem;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.35rem 1rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .chip:hover, .chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* GRID */
+  .grid-wrap {
+    padding: 1.8rem 2rem;
+  }
+
+  .section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.2rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.2rem;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(98,70,234,0.2);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card img {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-body {
+    padding: 0.75rem;
+  }
+
+  .card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .score {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #f5c542;
+  }
+
+  .episodes {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .genre-tag {
+    font-size: 0.65rem;
+    background: rgba(98,70,234,0.15);
+    color: #a89af0;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-top: 0.4rem;
+    display: inline-block;
+  }
+
+  /* MODAL */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .modal-bg.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    max-width: 580px;
+    width: 100%;
+    overflow: hidden;
+    animation: popIn 0.25s ease;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .modal-top {
+    display: flex;
+    gap: 1.2rem;
+    padding: 1.4rem;
+  }
+
+  .modal-top img {
+    width: 120px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .modal-info h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.3;
+    margin-bottom: 0.4rem;
+  }
+
+  .modal-info p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .modal-stats {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.4rem;
+  }
+
+  .stat {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .stat span { color: var(--muted); display: block; font-size: 0.65rem; }
+
+  .modal-close {
+    display: block;
+    width: 100%;
+    background: var(--surface);
+    border: none;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.9rem;
+    font-size: 0.85rem;
+    border-radius: 0 0 20px 20px;
+    cursor: pointer;
+  }
+
+  .modal-close:hover { color: var(--text); background: var(--border); }
+
+  /* LOADER */
+  .loader {
+    display: none;
+    justify-content: center;
+    padding: 3rem;
+  }
+
+  .loader.show { display: flex; }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    display: none;
+  }
+
+  .empty.show { display: block; }
+  .empty h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+
+  /* stagger cards */
+  .card:nth-child(2) { animation-delay: 0.05s }
+  .card:nth-child(3) { animation-delay: 0.1s }
+  .card:nth-child(4) { animation-delay: 0.15s }
+  .card:nth-child(5) { animation-delay: 0.2s }
+  .card:nth-child(6) { animation-delay: 0.25s }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ani<span>browse</span></div>
+  <div class="search-wrap">
+    <input id="searchInput" type="text" placeholder="Search anime..." />
+    <button onclick="searchAnime()">Search</button>
+  </div>
+  <div style="font-size:0.8rem;color:var(--muted);">powered by AniList</div>
+</header>
+
+<div class="filters">
+  <div class="chip active" onclick="setFilter('TRENDING', this)">🔥 Trending</div>
+  <div class="chip" onclick="setFilter('POPULARITY', this)">👑 Popular</div>
+  <div class="chip" onclick="setFilter('SCORE', this)">⭐ Top Rated</div>
+  <div class="chip" onclick="setFilter('SEASON', this)">📅 This Season</div>
+</div>
+
+<div class="grid-wrap">
+  <div class="section-title" id="sectionLabel">Trending Now</div>
+  <div class="loader show" id="loader"><div class="spinner"></div></div>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty">
+    <h3>No results found 😔</h3>
+    <p>Try a different search term</p>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-top">
+      <img id="mImg" src="" alt="">
+      <div class="modal-info">
+        <h2 id="mTitle"></h2>
+        <p id="mDesc"></p>
+        <div class="modal-stats">
+          <div class="stat"><span>Score</span><span id="mScore"></span></div>
+          <div class="stat"><span>Episodes</span><span id="mEps"></span></div>
+          <div class="stat"><span>Status</span><span id="mStatus"></span></div>
+        </div>
+      </div>
+    </div>
+    <button class="modal-close" onclick="document.getElementById('modalBg').classList.remove('open')">Close</button>
+  </div>
+</div>
+
+<script>
+  const QUERY_TRENDING = `
+    query ($sort: [MediaSort]) {
+      Page(perPage: 20) {
+        media(type: ANIME, sort: $sort, isAdult: false) {
+          id title { romaji } coverImage { large } averageScore episodes
+          status genres description(asHtml: false)
+        }
+      }
+    }
+  `;
+
+  const QUERY_SEARCH = `
+    query ($search: String) {
+      Page(perPage: 20) {
+        media(type: ANIME, search: $search, isAdult: false) {
+          id title { romaji } coverImage { large } averageScore episodes
+          status genres description(asHtml: false)
+        }
+      }
+    }
+  `;
+
+  const QUERY_SEASON = `
+    query {
+      Page(perPage: 20) {
+        media(type: ANIME, season: WINTER, seasonYear: 2025, isAdult: false, sort: POPULARITY_DESC) {
+          id title { romaji } coverImage { large } averageScore episodes
+          status genres description(asHtml: false)
+        }
+      }
+    }
+  `;
+
+  async function fetchAnime(query, variables = {}) {
+    const res = await fetch('https://graphql.anilist.co', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, variables })
+    });
+    const data = await res.json();
+    return data.data.Page.media;
+  }
+
+  function renderCards(animeList) {
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    grid.innerHTML = '';
+
+    if (!animeList.length) {
+      empty.classList.add('show');
+      return;
+    }
+
+    empty.classList.remove('show');
+
+    animeList.forEach(anime => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${anime.coverImage.large}" alt="${anime.title.romaji}" loading="lazy">
+        <div class="card-body">
+          <div class="card-title">${anime.title.romaji}</div>
+          <div class="card-meta">
+            <span class="score">★ ${anime.averageScore ? (anime.averageScore/10).toFixed(1) : 'N/A'}</span>
+            <span class="episodes">${anime.episodes ? anime.episodes + ' eps' : 'Ongoing'}</span>
+          </div>
+          ${anime.genres[0] ? `<span class="genre-tag">${anime.genres[0]}</span>` : ''}
+        </div>
+      `;
+      card.onclick = () => openModal(anime);
+      grid.appendChild(card);
+    });
+  }
+
+  function showLoader(on) {
+    document.getElementById('loader').classList.toggle('show', on);
+  }
+
+  async function loadDefault(sort = 'TRENDING_DESC') {
+    showLoader(true);
+    const data = await fetchAnime(QUERY_TRENDING, { sort: [sort] });
+    showLoader(false);
+    renderCards(data);
+  }
+
+  async function searchAnime() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (!q) return;
+    document.getElementById('sectionLabel').textContent = `Results for "${q}"`;
+    showLoader(true);
+    const data = await fetchAnime(QUERY_SEARCH, { search: q });
+    showLoader(false);
+    renderCards(data);
+  }
+
+  document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchAnime();
+  });
+
+  function setFilter(type, el) {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    const labels = { TRENDING: 'Trending Now', POPULARITY: 'Most Popular', SCORE: 'Top Rated', SEASON: 'This Season' };
+    document.getElementById('sectionLabel').textContent = labels[type];
+    document.getElementById('searchInput').value = '';
+    if (type === 'SEASON') loadSeason();
+    else loadDefault(type + '_DESC');
+  }
+
+  async function loadSeason() {
+    showLoader(true);
+    const data = await fetchAnime(QUERY_SEASON);
+    showLoader(false);
+    renderCards(data);
+  }
+
+  function openModal(anime) {
+    document.getElementById('mImg').src = anime.coverImage.large;
+    document.getElementById('mTitle').textContent = anime.title.romaji;
+    document.getElementById('mDesc').textContent = anime.description
+      ? anime.description.replace(/<[^>]+>/g, '').slice(0, 300) + '...'
+      : 'No description available.';
+    document.getElementById('mScore').textContent = anime.averageScore ? (anime.averageScore/10).toFixed(1) + '/10' : 'N/A';
+    document.getElementById('mEps').textContent = anime.episodes || '?';
+    document.getElementById('mStatus').textContent = anime.status || 'Unknown';
+    document.getElementById('modalBg').classList.add('open');
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('modalBg'))
+      document.getElementById('modalBg').classList.remove('open');
+  }
+
+  // init
+  loadDefault('TRENDING_DESC');
+</script>
+</body>
+</html>
